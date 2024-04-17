@@ -1,51 +1,66 @@
 import { Drawer, Input, Col, Select, Form, Row, Button, Spin } from 'antd';
-import { addNewAuction } from "../Client.js";
 import { LoadingOutlined } from "@ant-design/icons";
 import { useState } from 'react';
 import { successNotification, errorNotification } from "./Notification";
+import { createAuction} from '../Client.js';
 import UploadPicture from './UploadPicture.js';
 
-const { Option } = Select;
+import React from 'react';
+
+
+
 
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
-const auction = { title: "auction item title", url: "" };
 
-function NewAuctionDrawerForm({ showDrawer, setShowDrawer, fetchStudents }) {
-    console.log("showDrawer", showDrawer);
-    const onCLose = () => setShowDrawer(false);
+function NewAuctionDrawerForm({ showDrawer, setShowDrawer ,fetchAuctions}) {
+    const [base64, setBase64] = useState(null);
+    const [form] = Form.useForm(); // 使用 Form 组件提供的 useForm 钩子
+
+    //console.log("showDrawer", showDrawer);
+    const onCLose = () => {
+        
+        setShowDrawer(false)
+        form.resetFields();
+        setBase64(null);
+    };
     const [submitting, setSubmitting] = useState(false);
+    
 
 
     const onFinish = auction => {
-        setSubmitting(true)
+
+        setSubmitting(true);
         console.log(JSON.stringify(auction, null, 2))
-        addNewAuction(auction)
+        if (!base64) {
+            setSubmitting(false);
+            errorNotification("No picture uploaded", "Please upload a picture of the auction item");
+            return;
+        }
+        createAuction(auction, base64)
             .then(() => {
-                console.log("auction item added")
+                console.log("Create new auction item success");
                 onCLose();
                 successNotification(
-                    "Auction item successfully added",
+                    "New auction item successfully added",
                     `${auction.title} was added to the system`
                 )
-                //fetchStudents();
-            }).catch(
-            //         err => {
-            //     console.log(err)
-            //     err.response.json().then(res => {
-            //         console.log(res);
-            //         errorNotification("There was an issue",
-            //             `${res.message} [${res.status}] [${res.error}]`,
-            //              "bottomLeft"
-            //         )
-            //     })
-            // }
-        ).finally(() => {
-            setSubmitting(false);
-        })
+                fetchAuctions();
+            }).catch(err => {
+                console.log(err)
+                console.log(err.response);
+                errorNotification("There was an issue",
+                    `Failed to add ${auction.title} to the system`,
+                    "bottomLeft"
+                );
+            }).finally(() => {
+                setSubmitting(false);
+            })
+
     };
 
     const onFinishFailed = errorInfo => {
         alert(JSON.stringify(errorInfo, null, 2));
+        setSubmitting(false);
     };
 
     return <Drawer
@@ -70,14 +85,16 @@ function NewAuctionDrawerForm({ showDrawer, setShowDrawer, fetchStudents }) {
             </div>
         }
     >
-        <Form layout="vertical"
+        <Form 
+        form={form} 
+        layout="vertical"
             onFinishFailed={onFinishFailed}
             onFinish={onFinish}
             requiredMark>
             <Row gutter={16}>
                 <Col span={12}>
                     <Form.Item
-                        name="Title"
+                        name="title"
                         label="Title"
                         rules={[{ required: true, message: 'Please enter auction item title' }]}
                     >
@@ -86,19 +103,21 @@ function NewAuctionDrawerForm({ showDrawer, setShowDrawer, fetchStudents }) {
                 </Col>
 
             </Row>
-            <Row gutter={16}>
-                <Col span={18}>
+
+            <Row gutter={16} >
+               
+                <Col span={16}>
                     <Form.Item
-                        name="Picture"
+                        name="pictureUrl"
                         label="Picture"
                         rules={[
                             {
-                                required: true,
+                                required: false,
                                 message: 'please upload auction item picture',
                             },
                         ]}
                     >
-                        <UploadPicture/>
+                        <UploadPicture onPictureSelected={base64 => setBase64(base64)} />
                     </Form.Item>
                 </Col>
             </Row>
@@ -106,7 +125,7 @@ function NewAuctionDrawerForm({ showDrawer, setShowDrawer, fetchStudents }) {
                 <Col span={12}>
                     <Form.Item>
                         <Button type="primary" htmlType="submit">
-                            Create Auction Item
+                            Create
                         </Button>
                     </Form.Item>
                 </Col>

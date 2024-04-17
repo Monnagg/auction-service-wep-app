@@ -1,30 +1,18 @@
 import React from 'react';
-import { Breadcrumb, Layout, Menu, theme, Flex, Button, FloatButton, Spin } from 'antd';
+import { Breadcrumb, Layout, Menu, theme, Flex, Button, FloatButton, Spin, Empty } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import AuctionCard from '../components/AuctionCard';
 import { useState, useEffect } from 'react';
 import NewAuctionDrawerForm from '../components/NewAuctionDrawerForm';
 import { PlusOutlined } from '@ant-design/icons';
-import { getAllAuctions } from '../Client';
-import { errorNotification } from '../components/Notification';
-import { AuthStore } from '../store/AuthStore.js';
-import { AuctionStore } from '../store/AuctionStore.js';
-import { OverlayStore } from '../store/OverlayStore.js';
+import { getAllAuctions, updateBidAmount, addNewAuction } from '../Client';
+import { errorNotification, successNotification } from '../components/Notification';
 import { useAuth0 } from "@auth0/auth0-react";
-import { createAuth0Client } from '@auth0/auth0-spa-js';
 
-const auth0 = await createAuth0Client({
-  domain: 'serverless-service-auction.us.auth0.com',
-  clientId: 'XP5zHquR2J9cpyZaHChwQKLGwg748vdf'
-});
 
 const { Header, Content, Footer } = Layout;
 
 
-const items = new Array(3).fill(null).map((_, index) => ({
-    key: index + 1,
-    label: `nav ${index + 1}`,
-}));
 
 
 const antIcon = < LoadingOutlined style={{ fontSize: 24, }} />;
@@ -33,33 +21,10 @@ const AuctionPage = () => {
     const [showDrawer, setShowDrawer] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [auctions, setAuctions] = useState([]);
-    const [accessToken, setAccessToken] = useState(null);
-    const [idToken, setIdToken] = useState(null);
-    const {  getAccessTokenSilently } = useAuth0();
+    const { user } = useAuth0();
+    //console.log("user*********"+user.email);
 
-    const getUserMetadata = async () => {
-        const Auth0domain = process.env.REACT_APP_AUTH0_DOMAIN;
-        
-        try {
-            
-            const accessToken = await getAccessTokenSilently({
-                authorizationParams: {
-                    audience: `https://${Auth0domain}/api/v2/`,
-                    scope: "read:current_user",
-                },
-            });
-            console.log("accessToken*********");
-            console.log(accessToken);
-            setAccessToken(accessToken);
-        } catch (e) {
-            console.log("error*********");
-            console.log(e.message);
-        }
-    }
-
-
-
-    const fetchAuctions = (accessToken) => getAllAuctions(accessToken )
+    const fetchAuctions = () => getAllAuctions()
         .then(response => response.json())
         .then(data => {
             const { auctions } = data;
@@ -74,55 +39,57 @@ const AuctionPage = () => {
             })
         }).finally(() => setFetching(false));
 
+    const bidAuction = (auction) => {
+        // 调用 updateBidAmount 函数更新拍卖品的出价金额，返回一个 Promise
+        updateBidAmount(auction)
+            .then(() => {
+                successNotification("Bid Success", `${auction.title} was bid on successfully!`);
+                fetchAuctions();
+            })
+            .catch(err => {
+                console.log("bid error");
+                console.log(err);
+                errorNotification("There was an issue", "Please try again!");
+            });
+    };
+
     useEffect(() => {
         console.log("component is mounted");
-        //getUserMetadata();
-        const fetchIdToken = async () => {
-            try {
-              const claims = await auth0.getIdTokenClaims();
-              const id_token = claims.__raw;
-              console.log('ID Token from Access Token:', id_token);
-              setIdToken(id_token);
-            } catch (error) {
-              console.error('Error fetching token:', error);
-            }
-          };
-      
-          fetchIdToken();
-          //fetchAuctions(idToken);
-        //fetchAuctions(accessToken);
+        console.log("fetching*********");
+        fetchAuctions();
     }, []);
 
-    const {
-        token: { colorBgContainer, borderRadiusLG },
-    } = theme.useToken();
+
+
 
     const renderAuctions = () => {
         if (fetching) {
-            return <Spin indicator={antIcon} />
+            return (<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Spin size="large" />
+            </div>)
         }
-        //const { auctions } = auctionStore;
         if (!auctions.length) {
             return (
-                <div style={{ textAlign: 'center', width: '100%' }}>
-                    <h4>No auctions available. Create one?</h4>
-                </div>
+                <Spin size="large" />
             );
         }
         console.log(auctions.length);
+
         return auctions.map((auction) => {
             let bidState = 'CAN_BID';
-            console.log("*UHYFTRDTDHRR*********");
 
-            console.log(auction);
+            //console.log(auction);
+            if (auction.highestBid.bidder === user.email) {
+                bidState = 'HIGHEST_BIDDER';
+            }
+            //console.log("auction.seller*********"+auction.seller+" user.email*********"+user.email);
 
-            // if (auction.seller === authStore.email) {
-            //     bidState = 'OWN_AUCTION';
-            // }
+            if (auction.seller === user.email) {
+                bidState = 'OWN_AUCTION';
+            }
 
-            // if (auction.highestBid.bidder === authStore.email) {
-            //     bidState = 'HIGHEST_BIDDER';
-            // }
+
+            //console.log("bidState*********"+bidState);
             if (!auction) {
                 console.log("empty*****");
                 return null; // 或者返回一个适当的占位符
@@ -134,7 +101,7 @@ const AuctionPage = () => {
                     <AuctionCard
                         auction={auction}
                         bidState={bidState}
-                    //onBid={() => auctionStore.setBiddingOn(auction)}
+                        onBid={() => bidAuction(auction)}
                     />
                 </div>
             );
@@ -142,18 +109,14 @@ const AuctionPage = () => {
     };
 
 
-
+    const {
+        token: { colorBgContainer, borderRadiusLG },
+    } = theme.useToken();
     return (
         <Layout>
             <Header style={{ display: 'flex', alignItems: 'center' }}>
                 <div className="demo-logo" />
-                <Menu
-                    theme="dark"
-                    mode="horizontal"
-                    defaultSelectedKeys={['2']}
-                    items={items}
-                    style={{ flex: 1, minWidth: 0 }}
-                />
+
             </Header>
             <Content style={{ padding: '0 48px' }}>
                 <Breadcrumb style={{ margin: '16px 0' }}>
@@ -169,14 +132,12 @@ const AuctionPage = () => {
                     }}
                 >
                     <Flex wrap="wrap" gap="small">
-                        {renderAuctions()}
 
+                        {renderAuctions()}
+                    
+              
                     </Flex>
-                    {/* <Button
-                        onClick={() => setShowDrawer(!showDrawer)}
-                        type="primary" shape="round" size="small">
-                        Add New Student
-                    </Button> */}
+            
                     <FloatButton
                         shape="circle"
                         type="primary"
@@ -189,6 +150,7 @@ const AuctionPage = () => {
 
                     <NewAuctionDrawerForm showDrawer={showDrawer}
                         setShowDrawer={setShowDrawer}
+                        fetchAuctions={fetchAuctions}
                     />
 
                 </div>
