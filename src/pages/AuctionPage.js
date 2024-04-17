@@ -8,6 +8,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { getAllAuctions, updateBidAmount, addNewAuction } from '../Client';
 import { errorNotification, successNotification } from '../components/Notification';
 import { useAuth0 } from "@auth0/auth0-react";
+import LogoutButton from '../components/LogoutButton';
 
 
 const { Header, Content, Footer } = Layout;
@@ -59,35 +60,31 @@ const AuctionPage = () => {
         fetchAuctions();
     }, []);
 
-
-
-
     const renderAuctions = () => {
         if (fetching) {
-            return (<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <Spin size="large" />
-            </div>)
+            return  <Spin size="large" />
         }
         if (!auctions.length) {
             return (
-                <Spin size="large" />
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <h4>No auctions available. Create one?</h4>
+              </div>
             );
-        }
-        console.log(auctions.length);
+          }
+        // console.log(auctions.length);
+        // console.log("user info");
+        //     console.log(user);
 
         return auctions.map((auction) => {
             let bidState = 'CAN_BID';
-
-            //console.log(auction);
+            if (auction.seller === user.email) {
+                bidState = 'OWN_AUCTION';
+            }
+     
             if (auction.highestBid.bidder === user.email) {
                 bidState = 'HIGHEST_BIDDER';
             }
             //console.log("auction.seller*********"+auction.seller+" user.email*********"+user.email);
-
-            if (auction.seller === user.email) {
-                bidState = 'OWN_AUCTION';
-            }
-
 
             //console.log("bidState*********"+bidState);
             if (!auction) {
@@ -116,6 +113,7 @@ const AuctionPage = () => {
         <Layout>
             <Header style={{ display: 'flex', alignItems: 'center' }}>
                 <div className="demo-logo" />
+                <LogoutButton />
 
             </Header>
             <Content style={{ padding: '0 48px' }}>
@@ -131,7 +129,7 @@ const AuctionPage = () => {
                         borderRadius: borderRadiusLG,
                     }}
                 >
-                    <Flex wrap="wrap" gap="small">
+                    <Flex wrap="wrap" gap="large">
 
                         {renderAuctions()}
                     

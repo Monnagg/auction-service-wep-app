@@ -11,9 +11,9 @@ import { useState } from 'react';
 
 
 function App() {
-  const [accessToken, setAccessToken] = useState(null);
+  // const [accessToken, setAccessToken] = useState(null);
 
-  const {  getAccessTokenSilently } = useAuth0();
+  // const {  getAccessTokenSilently } = useAuth0();
 
 //   const getUserMetadata = async () => {
 //     const Auth0domain = process.env.REACT_APP_AUTH0_DOMAIN;
@@ -35,15 +35,29 @@ function App() {
 //     }
 // }
 
- // const { overlayStore } = props;
-  const { isAuthenticated } = useAuth0();
+const { user, isAuthenticated, isLoading } = useAuth0();
 console.log("isAuthenticated " + isAuthenticated);
   if (!isAuthenticated) {
     return (
       <WelcomePage />
     );
   }
+  if (isLoading) {
+    return <div>Loading ...</div>;
+  }
   return (<AuctionPage />);
+ 
+
+  // return (
+
+  //     <div>
+  //       <h1>Profile</h1>
+  //       <img src={user.picture} alt={user.name} />
+  //       <h2>{user.name}</h2>
+  //       <p>{user.email}</p>
+  //     </div>
+    
+  // );
 
 }
 

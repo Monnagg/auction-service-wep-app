@@ -33,15 +33,15 @@ function NewAuctionDrawerForm({ showDrawer, setShowDrawer ,fetchAuctions}) {
         console.log(JSON.stringify(auction, null, 2))
         if (!base64) {
             setSubmitting(false);
-            errorNotification("No picture uploaded", "Please upload a picture of the auction item");
+            errorNotification("No picture uploaded", "Please upload a picture of the auction ");
             return;
         }
         createAuction(auction, base64)
             .then(() => {
-                console.log("Create new auction item success");
+                console.log("Create new auction success");
                 onCLose();
                 successNotification(
-                    "New auction item successfully added",
+                    "New auction successfully added",
                     `${auction.title} was added to the system`
                 )
                 fetchAuctions();
@@ -59,12 +59,12 @@ function NewAuctionDrawerForm({ showDrawer, setShowDrawer ,fetchAuctions}) {
     };
 
     const onFinishFailed = errorInfo => {
-        alert(JSON.stringify(errorInfo, null, 2));
+        //alert(JSON.stringify(errorInfo, null, 2));
         setSubmitting(false);
     };
 
     return <Drawer
-        title="Create new Auction Item"
+        title="Create new Auction"
         width={720}
         onClose={onCLose}
         open={showDrawer}
@@ -96,9 +96,9 @@ function NewAuctionDrawerForm({ showDrawer, setShowDrawer ,fetchAuctions}) {
                     <Form.Item
                         name="title"
                         label="Title"
-                        rules={[{ required: true, message: 'Please enter auction item title' }]}
+                        rules={[{ required: true, message: 'Please enter auction title' }]}
                     >
-                        <Input placeholder="Please enter auction item title" />
+                        <Input placeholder="Please enter auction title" />
                     </Form.Item>
                 </Col>
 

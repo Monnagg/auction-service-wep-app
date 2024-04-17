@@ -34,8 +34,8 @@ root.render(
         clientId={clientId}
         authorizationParams={{
           redirect_uri: window.location.origin,
-          audience: `https://${domain}/api/v2/`,
-          scope: "read:current_user update:current_user_metadata read:resource"
+          // audience: `https://${domain}/api/v2/`,
+          // scope: "read:current_user update:current_user_metadata read:resource"
         }}
       >
         <RouterProvider router={router} />

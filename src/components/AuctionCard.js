@@ -1,12 +1,8 @@
 import React from 'react';
 import { EditOutlined, EllipsisOutlined, SettingOutlined } from '@ant-design/icons';
-import { Avatar, Card, Col, Row, Image, Button, Flex, Space } from 'antd';
+import { Avatar, Card, Col, Row, Image, Button, Flex, Space, Statistic } from 'antd';
 
-const { Meta } = Card;
-const url = 'https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png';
-const name = "auction item name";
-//const amount = 100;
-const status = "OPEN";
+const { Countdown } = Statistic;
 
 
 const AuctionCard = ({ auction, onBid, bidState }) => {
@@ -18,6 +14,13 @@ const AuctionCard = ({ auction, onBid, bidState }) => {
     const amount = auction.highestBid.amount;
     //console.log("picture url************"+auction.pictureUrl);
     const pictureUrl = auction.pictureUrl ? auction.pictureUrl : 'placeholder.png';
+    console.log(auction);
+    const date = auction.endingAt;
+    const deadline = new Date(date);
+    const onFinish = () => {
+
+    };
+
 
 
     return (
@@ -43,24 +46,45 @@ const AuctionCard = ({ auction, onBid, bidState }) => {
                             {amount === 0 ? 'No bids' : `$${amount}`}
                         </Card>
                     </Col>
-                    <Col span={12}>
+                    {/* <Col span={12}>
                         <Card title="STATUS" bordered={false}>
                             {auction.status}
                         </Card>
+                    </Col> */}
+                    <Col span={12}>
+                        <Card title="TIME REMAINING" bordered={false} >
+                            <Countdown value={deadline} onFinish={onFinish} style={{
+                                //width: 450,
+                                height: 22,
+                            }} />
+                        </Card>
+
                     </Col>
 
                 </Row>
 
-                {(bidState === 'OWN_AUCTION' || bidState === 'HIGHEST_BIDDER') && (
+                {/* {(bidState === 'OWN_AUCTION' || bidState === 'HIGHEST_BIDDER') && (
                     <h2>
                         {bidState === 'OWN_AUCTION' ? 'This is your auction' : 'You are the highest bidder'}
                     </h2>
-                )}
+                )} */}
 
                 <Flex vertical gap="small" style={{ width: '100%' }}>
-                    <Button type="primary" block onClick={() => onBid()}>
+                    {(bidState === 'OWN_AUCTION' || bidState === 'HIGHEST_BIDDER') && (
+                        <Button
+                            type="primary" block
+                            disabled={true}
+                            onClick={() => onBid()}
+                        >
+                            {bidState === 'OWN_AUCTION' ? 'This is your auction' : 'You are the highest bidder'}
+                        </Button>
+                    )}
+                    {bidState === 'CAN_BID' && (
+                        <Button type="primary" block onClick={() => onBid()}>
                         Bid Now!
-                    </Button >
+                        </Button >
+                    )}
+                    
                 </Flex>
             </Space>
         </Card>
